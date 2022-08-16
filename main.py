@@ -39,12 +39,13 @@ def scrape():
     for s in sh:
         if str(date.today()) == s.title:
             sheet.del_worksheet(s)
-    worksheet = sheet.add_worksheet(title="{}".format(date.today()), rows="200", cols="25")
+    worksheet = sheet.add_worksheet(title="{}".format(date.today()), rows="800", cols="25")
     data = card_data()
     worksheet.insert_row(["ISBN","AUTHOR","TITLE","ED","YEAR","DIS", "CURR", "PRICE", "STREAM", "SUBJECT", "LEVEL", "Amazon_data"],1)
     for i in data:
         try:
             options = Options()
+            options.add_argument('--headless')
             # options.add_argument(
             #     "user-agent=Mozilla/5.0 (Linux; Android 4.0.4; Galaxy Nexus Build/IMM76B) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.133 Mobile Safari/535.19")
             driver = webdriver.Chrome(executable_path='./chromedriver', options=options)
