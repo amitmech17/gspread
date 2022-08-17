@@ -27,6 +27,33 @@ def card_data():
                 line_count += 1
         return product_data
 
+def brac_clean(data):
+    new_data = []
+    for i in data:
+        if "(" in i:
+            i = i.replace(")", "")
+            i = i.split("(")
+            new_data = new_data + i
+        elif "paper" in i.lower() or "bundle" in i.lower() or "cover" in i.lower():
+            continue
+        else:
+            new_data.append(i)
+    return new_data
+
+
+def swap(newList):
+    newList[0], newList[-1] = newList[-1], newList[0]
+
+    return newList
+
+
+def swap_price(data):
+    new = []
+    first = int(data[0].replace("₹","").replace(",",""))
+    second = int(data[1].replace("₹","").replace(",",""))
+    if first > second:
+        data[0], data[1] = data[1], data[0]
+    return data
 
 
 def scrape():
@@ -45,7 +72,7 @@ def scrape():
     for i in data:
         try:
             options = Options()
-            options.add_argument('--headless')
+            # options.add_argument('--headless')
             # options.add_argument(
             #     "user-agent=Mozilla/5.0 (Linux; Android 4.0.4; Galaxy Nexus Build/IMM76B) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.133 Mobile Safari/535.19")
             driver = webdriver.Chrome(executable_path='./chromedriver', options=options)
@@ -62,12 +89,33 @@ def scrape():
                     if "kindle edition" in re.text.lower():
                         ren = driver.find_element(By.XPATH,
                                              "//div[@class='sg-col-inner']//div[@class='a-section a-spacing-none a-spacing-top-mini']//div[@class='a-row a-size-base a-color-base'][2]")
-                        i = i + (ren.text.split("\n"))
+                        if "(" in ren.text:
+                            temp_data = ren.text.split("\n")
+                            temp_data = brac_clean(temp_data)
+                        else:
+                            temp_data = ren.text.split("\n")
+                            if "-" in temp_data[0] or "%" in temp_data[0]:
+                                temp_data = swap(temp_data)
+                            elif "paper" in temp_data[0].lower or "bundle" in temp_data[0].lower or "cover" in temp_data[0].lower:
+                                temp_data = temp_data[1:]
+                        swap_price(temp_data)
+                        i = i + temp_data
                     else:
-                        i = i + (re.text.split("\n")[1:])
+                        if "(" in re.text:
+                            temp_data = re.text.split("\n")
+                            temp_data = brac_clean(temp_data)
+                        else:
+                            temp_data = re.text.split("\n")[1:]
+                            if "-" in temp_data[0] or "%" in temp_data[0]:
+                                temp_data = swap(temp_data)
+                        swap_price(temp_data)
+                        i = i + temp_data
                     break
+            driver.quit()
             worksheet.insert_row(i, 2)
-        except:
+        except Exception as e:
+            print(e)
+            driver.quit()
             i.append("error")
             worksheet.insert_row(i, 2)
 
